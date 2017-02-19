@@ -1,0 +1,3 @@
+/Users/Travis/CSCI 4330/lab3/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/Travis/CSCI 4330/lab3/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/Users/Travis/CSCI 4330/lab3/cmake-build-debug/CMakeFiles/lab3.dir
