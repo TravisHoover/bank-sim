@@ -1,0 +1,3 @@
+script: make Makefile
+language: c
+compiler: gcc
