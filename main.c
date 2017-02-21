@@ -37,12 +37,12 @@ void *transaction(void *arg) {
 
 int main() {
 
+    int i, j;
     struct Account account[numFiles];
     FILE *pFile;
-    struct Account args[numATMs];
     pthread_t thread[numATMs];
 
-    for (int i = 0; i < numFiles; i++) {
+    for (i = 0; i < numFiles; i++) {
 
         // Determine customer file to be opened
         char fileName[10];
@@ -61,7 +61,7 @@ int main() {
     //fprintf(pFile, "%f", account[i].balance);
 
     /*** ATM implementation ***/
-    for ( int j = 0; j < numATMs; j++) {
+    for (j = 0; j < numATMs; j++) {
         pthread_create(&thread[j], NULL, &transaction, &account[j]);
         //pass one of the atm.dat files into this thread
         pthread_join(thread[j], NULL);
