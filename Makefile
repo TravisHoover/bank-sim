@@ -1,6 +1,5 @@
 TARGET = prog
 LIBS = -lm
-LDFLAGS=-pthread
 CC = gcc
 CFLAGS = -g -Wall
 
