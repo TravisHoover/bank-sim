@@ -1,6 +1,3 @@
 language: c
 compiler: gcc
 script: make
-notifications:
-	email:
-		-traviskhoover@gmail.com
