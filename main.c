@@ -40,7 +40,7 @@ int main() {
     int i, j;
     struct Account account[numFiles];
     FILE *pFile;
-    pthread_t thread[numATMs];
+    //pthread_t thread[numATMs];
 
     for (i = 0; i < numFiles; i++) {
 
@@ -62,9 +62,9 @@ int main() {
 
     /*** ATM implementation ***/
     for (j = 0; j < numATMs; j++) {
-        pthread_create(&thread[j], NULL, &transaction, &account[j]);
+        //pthread_create(&thread[j], NULL, &transaction, &account[j]);
         //pass one of the atm.dat files into this thread
-        pthread_join(thread[j], NULL);
+        //pthread_join(thread[j], NULL);
     }
 
     /*** main.c work queue ***/
