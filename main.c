@@ -5,7 +5,7 @@
 
 int numFiles = 4;
 const int numATMs = 3;
-int thread_ids[numATMs] = {0, 1, 2};
+int thread_ids[3] = {0, 1, 2};
 int done = 0;
 
 struct Account {
