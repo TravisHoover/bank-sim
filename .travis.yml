@@ -1,3 +1,4 @@
 language: c
 compiler: gcc
-script: make
+script: gcc main.c -lm && make
+os : linux
