@@ -3,7 +3,7 @@
 #include <unistd.h>
 
 
-int numFiles = 4;
+const int numFiles = 4;
 const int numATMs = 3;
 int thread_ids[3] = {0, 1, 2};
 int done = 0;
@@ -12,6 +12,7 @@ struct Account {
     int number;
     float balance;
 };
+struct Account account[4];
 
 void *transaction(void * arg) {
     int accNumber;
@@ -24,6 +25,8 @@ void *transaction(void * arg) {
     transaction = fopen("atm0.dat", "r");
     for (;;) {
 
+        int t;
+
         fscanf(transaction, "%d %c %f %d", &accNumber, &tranType, & tranAmount, &waitTime);
 
         if (feof(transaction)) break;
@@ -34,6 +37,24 @@ void *transaction(void * arg) {
         printf("Wait time: %d\n", waitTime);*/
 
         //update account
+        for (t = 0; t < numFiles; t++) {
+            if (accNumber == account[t].number) {
+                if (tranType == 'd') {
+                    account[t].balance += tranAmount;
+                } else if (tranType == 'w') {
+                    account[t].balance -= tranAmount;
+                } else {
+                    printf("Error reading type of transaction.\n");
+                }
+
+                printf("New balance for account %08d: %.2f\n", accNumber, account[t].balance);
+
+                if (account[t].balance < 0) {
+                    printf("Warning: Account %08d has overdrafted. There will be a penalty of $10\n", accNumber);
+                    account[t].balance -= 10;
+                }
+            }
+        }
 
         //print the current account and it's current balance
 
@@ -45,7 +66,6 @@ void *transaction(void * arg) {
         //put the transaction into the main program's work queue
 
         //sleep
-        printf("sleeping %d seconds\n", waitTime);
         sleep(waitTime);
     }
     done++;
@@ -56,7 +76,7 @@ void *transaction(void * arg) {
 int main() {
 
     int i, j, k;
-    struct Account account[numFiles];
+
     FILE *pFile;
     pthread_t thread[numATMs];
 
@@ -72,7 +92,7 @@ int main() {
         printf("Account number: %08d\n", account[i].number);
         printf("Account balance: $%.2f\n\n", account[i].balance);
     }
-printf("********** Transactions **********");
+//printf("********** Transactions **********");
     /*** Reopen the files for writing ***/
     /* Not sure why this is needed yet */
     //pFile = fopen(fileName, "w");
@@ -82,7 +102,6 @@ printf("********** Transactions **********");
     for (j = 0; j < numATMs; j++) {
         pthread_create(&thread[j], NULL, transaction, &thread_ids[j]);
         //pass one of the atm.dat files into this thread
-        //pthread_join(thread[j], NULL);
     }
 
     for (k = 0; k < numATMs; k++) {
