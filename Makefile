@@ -1,5 +1,5 @@
 TARGET = prog
-LIBS = -lm
+LDFLAGS = -lm
 CC = gcc
 CFLAGS = -g -Wall
 
@@ -17,7 +17,7 @@ HEADERS = $(wildcard *.h)
 .PRECIOUS: $(TARGET) $(OBJECTS)
 
 $(TARGET): $(OBJECTS)
-	$(CC) $(OBJECTS) -Wall $(LIBS) -o $@ $(LDFLAGS)
+	$(CC) $(OBJECTS) -Wall -o $@ $(LDFLAGS)
 
 clean:
 	-rm -f *.o
