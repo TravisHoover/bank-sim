@@ -21,8 +21,14 @@ void *transaction(void * arg) {
     unsigned int waitTime;
 
     FILE *transaction;
+    int threadID = *(int *)arg;
 
-    transaction = fopen("atm0.dat", "r");
+    char atmFile[10];
+    snprintf(atmFile, sizeof(atmFile), "atm%d.dat", threadID);
+
+    printf("Thread %d opening %s\n", threadID, atmFile);
+
+    transaction = fopen(atmFile, "r");
     for (;;) {
 
         int t;
@@ -37,7 +43,7 @@ void *transaction(void * arg) {
         printf("Wait time: %d\n", waitTime);*/
 
         //update account
-        for (t = 0; t < numFiles; t++) {
+        for (t = 0; t < numFiles; t++) {            //scan all cust.dat files to find account
             if (accNumber == account[t].number) {
                 if (tranType == 'd') {
                     account[t].balance += tranAmount;
@@ -47,27 +53,22 @@ void *transaction(void * arg) {
                     printf("Error reading type of transaction.\n");
                 }
 
+                //print the current account and it's current balance
                 printf("New balance for account %08d: %.2f\n", accNumber, account[t].balance);
 
+                //print overdrawn message if necessary
                 if (account[t].balance < 0) {
                     printf("Warning: Account %08d has overdrafted. There will be a penalty of $10\n", accNumber);
                     account[t].balance -= 10;
                 }
             }
+            //put the transaction into the main program's work queue
+
+            //sleep
+            sleep(waitTime);
         }
-
-        //print the current account and it's current balance
-
-        //print overdrawn message if necessary
-        /*if (balance < 0) {
-            printf("Warning: Account is overdrawn\n");
-        }*/
-
-        //put the transaction into the main program's work queue
-
-        //sleep
-        sleep(waitTime);
     }
+
     done++;
 
     return NULL;
@@ -89,8 +90,8 @@ int main() {
         printf("Opening file: %s\n", fileName);
         pFile = fopen(fileName, "r");
         fscanf(pFile, "%d %f", &account[i].number, &account[i].balance);
-        printf("Account number: %08d\n", account[i].number);
-        printf("Account balance: $%.2f\n\n", account[i].balance);
+        //printf("Account number: %08d\n", account[i].number);
+        //printf("Account balance: $%.2f\n\n", account[i].balance);
     }
 //printf("********** Transactions **********");
     /*** Reopen the files for writing ***/
