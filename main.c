@@ -18,6 +18,9 @@ int thread_ids[3] = {0, 1, 2};
 int done = 0;
 int queueCount = 0;
 
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t threshhold = PTHREAD_COND_INITIALIZER;
+
 struct Account {
     int number;
     float balance;
@@ -33,6 +36,31 @@ struct Queue {
 
 struct Account account[4];
 struct Queue queue[3];
+
+void * mainQueue(void * idp)
+{
+    int me = *(int *)idp;
+    int mycount;
+    pthread_mutex_lock(&mutex);
+    while(queueCount < 3) {
+        pthread_cond_wait(&threshhold, &mutex);
+        //print transactions to the appropriate customer file
+        //char fileName[10];
+        //snprintf(fileName, sizeof(fileName), "cust%d.dat", queue->accNum);
+        FILE *write;
+        write = fopen("cust0.dat", "a");
+
+        fprintf(write, "%d %c %f %f\n", queue->atmNum, queue->transactionType, queue->transactionAmount,
+              queue->balance);
+        fprintf(write, "Testing...\n");
+        queueCount--;
+    }
+
+    queueCount = 0;
+    mycount = queueCount;
+    printf("watch_count():  Thread %d, Count is %d\n", me,mycount);
+    pthread_mutex_unlock(&mutex);
+}
 
 void *transaction(void * arg) {
     int accNumber;
@@ -53,13 +81,14 @@ void *transaction(void * arg) {
 
         int t;
 
-        fscanf(transaction, "%d %c %f %d", &accNumber, &tranType, & tranAmount, &waitTime);
+        fscanf(transaction, "%d %c %f %d", &accNumber, &tranType, &tranAmount, &waitTime);
 
         if (feof(transaction)) break;
 
         //update account
         for (t = 0; t < numFiles; t++) {            //scan all cust.dat files to find account
             if (accNumber == account[t].number) {
+                pthread_mutex_lock(&mutex);
                 if (tranType == 'd') {
                     account[t].balance += tranAmount;
                 } else if (tranType == 'w') {
@@ -68,27 +97,32 @@ void *transaction(void * arg) {
                     printf("Error reading type of transaction.\n");
                 }
 
-                //print the current account and it's current balance
-                printf("New balance for account %08d: %.2f\n", accNumber, account[t].balance);
-
                 //print overdrawn message if necessary
                 if (account[t].balance < 0) {
                     printf("Warning: Account %08d has become overdraft. There will be a penalty of $10\n", accNumber);
                     account[t].balance -= 10;
                 }
 
-                queue[queueCount].atmNum = threadID;
+                //print the current account and it's current balance
+                printf("New balance for account %08d: %.2f\n", accNumber, account[t].balance);
+
+                /*queue[queueCount].atmNum = threadID;
                 queue[queueCount].accNum = accNumber;
                 queue[queueCount].transactionType = tranType;
                 queue[queueCount].transactionAmount = tranAmount;
                 queue[queueCount].balance = account[t].balance;
-                queueCount++;
+                queueCount++;*/
 
                 char writeName[10];
                 snprintf(writeName, sizeof(writeName), "cust%d.dat", t);
                 FILE *transWrite;
                 transWrite = fopen(writeName, "a");
-                fprintf(transWrite, "%d %c %f %.2f \n", threadID, tranType, tranAmount, account[t].balance);
+                fprintf(transWrite, "%d %c %.2f %.2f \n", threadID, tranType, tranAmount, account[t].balance);
+                queueCount++;
+                if (queueCount == 3) {
+                    pthread_cond_signal(&threshhold);
+                }
+                pthread_mutex_unlock(&mutex);
             }
             //put the transaction into the main program's work queue
 
@@ -125,23 +159,7 @@ int main() {
     for (j = 0; j < numATMs; j++) {
         pthread_create(&thread[j], NULL, transaction, &thread_ids[j]);
     }
-
-    /*** main.c work queue ***/
-
-    if (queueCount == 3) {
-        while (queueCount > 0) {
-
-            //print transactions to the appropriate customer file
-            char fileName[10];
-            snprintf(fileName, sizeof(fileName), "cust%d.dat", queue->accNum);
-            FILE *write;
-            write = fopen(fileName, "a");
-
-            fprintf(write, "%d %c %f %f\n", queue->atmNum, queue->transactionType, queue->transactionAmount,
-                    queue->balance);
-            queueCount--;
-        }
-    }
+    //pthread_create(&thread[4], NULL, mainQueue, &thread_ids[4]);
 
     for (k = 0; k < numATMs; k++) {
         pthread_join(thread[k], NULL);
@@ -155,6 +173,8 @@ int main() {
     } else {
         printf("\nError: one of the threads did not complete successfully\n");
     }
-
+    FILE *write;
+    write = fopen("cust0.dat", "a");
+    fprintf(write, "End test run***\n");
     return 0;
 }
