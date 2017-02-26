@@ -83,6 +83,12 @@ void *transaction(void * arg) {
                 queue[queueCount].transactionAmount = tranAmount;
                 queue[queueCount].balance = account[t].balance;
                 queueCount++;
+
+                char writeName[10];
+                snprintf(writeName, sizeof(writeName), "cust%d.dat", t);
+                FILE *transWrite;
+                transWrite = fopen(writeName, "a");
+                fprintf(transWrite, "%d %c %f %.2f \n", threadID, tranType, tranAmount, account[t].balance);
             }
             //put the transaction into the main program's work queue
 
@@ -128,9 +134,10 @@ int main() {
             //print transactions to the appropriate customer file
             char fileName[10];
             snprintf(fileName, sizeof(fileName), "cust%d.dat", queue->accNum);
-            pFile = fopen(fileName, "w");
+            FILE *write;
+            write = fopen(fileName, "a");
 
-            fprintf(pFile, "%d %c %f %f\n", queue->atmNum, queue->transactionType, queue->transactionAmount,
+            fprintf(write, "%d %c %f %f\n", queue->atmNum, queue->transactionType, queue->transactionAmount,
                     queue->balance);
             queueCount--;
         }
