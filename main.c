@@ -39,19 +39,25 @@ struct Queue queue[3];
 
 void * mainQueue(void * idp) {
     while(!done) {
+        int q, c;
         pthread_mutex_lock(&mutex);
         pthread_cond_wait(&threshold, &mutex);
-        while (queueCount > 0) {
+        for (c = 0; c < queueCount; c++) {
             //print transactions to the appropriate customer file
-            char fileName[10];
-            snprintf(fileName, sizeof(fileName), "cust%d.dat", queue->atmNum);
-            //printf("writing to %s\n", fileName);
+            for (q = 0; q < numAccounts; q++) {     //look through cust.dat files to find the right one
+                if (queue[c].accNum == account[q].number) {
 
-            FILE *write;
-            write = fopen(fileName, "a");
+                    char fileName[10];
+                    snprintf(fileName, sizeof(fileName), "cust%d.dat", q);
 
-            //fprintf(write, "%d %c %.2f %.2f\n", queue->atmNum, queue->transactionType, queue->transactionAmount, queue->balance);
-            //fprintf(write, "Testing...\n");
+                    FILE *write;
+                    write = fopen(fileName, "a");
+
+                    fprintf(write, "%d  %c  %.2f  %.2f\n", queue[c].atmNum, queue[c].transactionType,
+                            queue[c].transactionAmount,
+                            queue[c].balance);
+                }
+            }
             queueCount--;
         }
         queueCount = 0;
@@ -120,8 +126,7 @@ void *transaction(void * arg) {
 //                fprintf(transWrite, "%d %c %.2f %.2f \n", threadID, tranType, tranAmount, account[t].balance);
 
                 if (queueCount == 3) {
-                    printf("quecount has reached 3\n");
-                    printf("quecount is %d\n", queueCount);
+                    printf("queueCount 3\n");
                     pthread_cond_signal(&threshold);
                 }
             }
@@ -176,8 +181,6 @@ int main() {
     } else {
         printf("\nError: one of the threads did not complete successfully\n");
     }
-    FILE *write;
-    write = fopen("cust0.dat", "a");
-    fprintf(write, "End test run***\n");
+
     return 0;
 }
