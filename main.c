@@ -42,7 +42,7 @@ void * mainQueue(void * idp) {
         int q, c;
         pthread_mutex_lock(&mutex);
         pthread_cond_wait(&threshold, &mutex);
-        for (c = 0; c < queueCount; c++) {
+        for (c = 0; c < 3; c++) {
             //print transactions to the appropriate customer file
             for (q = 0; q < numAccounts; q++) {     //look through cust.dat files to find the right one
                 if (queue[c].accNum == account[q].number) {
@@ -53,14 +53,13 @@ void * mainQueue(void * idp) {
                     FILE *write;
                     write = fopen(fileName, "a");
 
-                    fprintf(write, "%d  %c  %.2f  %.2f\n", queue[c].atmNum, queue[c].transactionType,
+                    fprintf(write, "%d  %c  %.2f  %.2f  queueCount: %d\n", queue[c].atmNum, queue[c].transactionType,
                             queue[c].transactionAmount,
-                            queue[c].balance);
+                            queue[c].balance, queueCount);
+                    queueCount--;
                 }
             }
-            queueCount--;
         }
-        queueCount = 0;
 
         pthread_mutex_unlock(&mutex);
     }
@@ -105,12 +104,12 @@ void *transaction(void * arg) {
 
                 //print overdrawn message if necessary
                 if (account[t].balance < 0) {
-                    printf("Warning: Account %08d has become overdraft. There will be a penalty of $10\n", accNumber);
+                    //printf("Warning: Account %08d has become overdraft. There will be a penalty of $10\n", accNumber);
                     account[t].balance -= 10;
                 }
 
                 //print the current account and it's current balance
-                printf("New balance for account %08d: %.2f\n", accNumber, account[t].balance);
+                printf("New balance for account %08d: %.2f after adding %.2f\n", accNumber, account[t].balance, tranAmount);
 
                 queue[queueCount].atmNum = threadID;
                 queue[queueCount].accNum = accNumber;
@@ -135,7 +134,7 @@ void *transaction(void * arg) {
             //put the transaction into the main program's work queue
 
             //sleep
-            //sleep(waitTime);
+            sleep(waitTime);
         }
     }
 
@@ -150,7 +149,7 @@ int main() {
 
     FILE *pFile;
     pthread_t thread[numATMs];
-    pthread_t what;
+    pthread_t main;
 
     /*** Read in customer accounts ***/
     for (i = 0; i < numAccounts; i++) {
@@ -167,11 +166,12 @@ int main() {
     for (j = 0; j < numATMs; j++) {
         pthread_create(&thread[j], NULL, transaction, &thread_ids[j]);
     }
-    pthread_create(&what, NULL, mainQueue, &thread_ids[4]);
+    pthread_create(&main, NULL, mainQueue, &thread_ids[4]);
 
     for (k = 0; k < numATMs; k++) {
         pthread_join(thread[k], NULL);
     }
+    pthread_join(main,NULL);
 
     if (done == numATMs) {
         printf("\n/***** Final Balances *****/\n");
