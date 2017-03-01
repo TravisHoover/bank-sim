@@ -42,9 +42,9 @@ void * mainQueue(void * idp) {
         int q, c;
         pthread_mutex_lock(&mutex);
         pthread_cond_wait(&threshold, &mutex);
-        for (c = 0; c < 3; c++) {
+        for (c = 0; c < 3; c++) {               //for loop for queue
             //print transactions to the appropriate customer file
-            for (q = 0; q < numAccounts; q++) {     //look through cust.dat files to find the right one
+            for (q = 0; q < numAccounts; q++) {     //for loop for number of cust.dat files
                 if (queue[c].accNum == account[q].number) {
 
                     char fileName[10];
@@ -53,14 +53,14 @@ void * mainQueue(void * idp) {
                     FILE *write;
                     write = fopen(fileName, "a");
 
-                    fprintf(write, "%d  %c  %.2f  %.2f  queueCount: %d\n", queue[c].atmNum, queue[c].transactionType,
+                    fprintf(write, "%d  %c  %.2f  %.2f\n", queue[c].atmNum,
+                            queue[c].transactionType,
                             queue[c].transactionAmount,
-                            queue[c].balance, queueCount);
+                            queue[c].balance);
                     queueCount--;
                 }
             }
         }
-
         pthread_mutex_unlock(&mutex);
     }
     return NULL;
@@ -87,36 +87,39 @@ void *transaction(void * arg) {
 
         fscanf(transaction, "%d %c %f %d", &accNumber, &tranType, &tranAmount, &waitTime);
 
-        if (feof(transaction)) break;
+        if (feof(transaction)) {
+            break;
+        } else {
 
-        //update account
-        for (t = 0; t < numAccounts; t++) {            //scan all cust.dat files to find account
-            pthread_mutex_lock(&mutex);
-            if (accNumber == account[t].number) {
+            //update account
+            for (t = 0; t < numAccounts; t++) {            //scan all cust.dat files to find account
+                pthread_mutex_lock(&mutex);
+                if (accNumber == account[t].number) {
 
-                if (tranType == 'd') {
-                    account[t].balance += tranAmount;
-                } else if (tranType == 'w') {
-                    account[t].balance -= tranAmount;
-                } else {
-                    printf("Error reading type of transaction.\n");
-                }
+                    if (tranType == 'd') {
+                        account[t].balance += tranAmount;
+                    } else if (tranType == 'w') {
+                        account[t].balance -= tranAmount;
+                    } else {
+                        printf("Error reading type of transaction.\n");
+                    }
 
-                //print overdrawn message if necessary
-                if (account[t].balance < 0) {
-                    //printf("Warning: Account %08d has become overdraft. There will be a penalty of $10\n", accNumber);
-                    account[t].balance -= 10;
-                }
+                    //print overdrawn message if necessary
+                    if (account[t].balance < 0) {
+                        //printf("Warning: Account %08d has become overdraft. There will be a penalty of $10\n", accNumber);
+                        account[t].balance -= 10;
+                    }
 
-                //print the current account and it's current balance
-                printf("New balance for account %08d: %.2f after adding %.2f\n", accNumber, account[t].balance, tranAmount);
+                    //print the current account and it's current balance
+                    printf("New balance for account %08d: %.2f after adding %.2f\n", accNumber, account[t].balance,
+                           tranAmount);
 
-                queue[queueCount].atmNum = threadID;
-                queue[queueCount].accNum = accNumber;
-                queue[queueCount].transactionType = tranType;
-                queue[queueCount].transactionAmount = tranAmount;
-                queue[queueCount].balance = account[t].balance;
-                queueCount++;
+                    queue[queueCount].atmNum = threadID;
+                    queue[queueCount].accNum = accNumber;
+                    queue[queueCount].transactionType = tranType;
+                    queue[queueCount].transactionAmount = tranAmount;
+                    queue[queueCount].balance = account[t].balance;
+                    queueCount++;
 
 //                char writeName[10];
 //                snprintf(writeName, sizeof(writeName), "cust%d.dat", t);
@@ -124,17 +127,15 @@ void *transaction(void * arg) {
 //                transWrite = fopen(writeName, "a");
 //                fprintf(transWrite, "%d %c %.2f %.2f \n", threadID, tranType, tranAmount, account[t].balance);
 
-                if (queueCount == 3) {
-                    printf("queueCount 3\n");
-                    pthread_cond_signal(&threshold);
+                    if (queueCount == 3) {
+                        printf("queueCount 3\n");
+                        pthread_cond_signal(&threshold);
+                    }
+                    //sleep
+                    sleep(waitTime);
                 }
+                pthread_mutex_unlock(&mutex);
             }
-            pthread_mutex_unlock(&mutex);
-
-            //put the transaction into the main program's work queue
-
-            //sleep
-            sleep(waitTime);
         }
     }
 
