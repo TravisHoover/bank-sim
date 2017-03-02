@@ -82,14 +82,13 @@ void *transaction(void * arg) {
 
     transaction = fopen(atmFile, "r");
     for (;;) {
+        if (feof(transaction)) {
+            break;
+        }
 
         int t;
 
         fscanf(transaction, "%d %c %f %d", &accNumber, &tranType, &tranAmount, &waitTime);
-
-        if (feof(transaction)) {
-            break;
-        } else {
 
             //update account
             for (t = 0; t < numAccounts; t++) {            //scan all cust.dat files to find account
@@ -136,7 +135,6 @@ void *transaction(void * arg) {
                 }
                 pthread_mutex_unlock(&mutex);
             }
-        }
     }
 
     done++;
