@@ -82,11 +82,11 @@ void *transaction(void * arg) {
 
     transaction = fopen(atmFile, "r");
     for (;;) {
+        int t;
+
         if (feof(transaction)) {
             break;
         }
-
-        int t;
 
         fscanf(transaction, "%d %c %f %d", &accNumber, &tranType, &tranAmount, &waitTime);
 
@@ -105,13 +105,12 @@ void *transaction(void * arg) {
 
                     //print overdrawn message if necessary
                     if (account[t].balance < 0) {
-                        //printf("Warning: Account %08d has become overdraft. There will be a penalty of $10\n", accNumber);
+                        printf("Warning: Account %08d has become overdraft. There will be a penalty of $10\n", accNumber);
                         account[t].balance -= 10;
                     }
 
                     //print the current account and it's current balance
-                    printf("New balance for account %08d: %.2f after adding %.2f\n", accNumber, account[t].balance,
-                           tranAmount);
+                    printf("New balance for account %08d: %.2f\n", accNumber, account[t].balance);
 
                     queue[queueCount].atmNum = threadID;
                     queue[queueCount].accNum = accNumber;
@@ -120,16 +119,10 @@ void *transaction(void * arg) {
                     queue[queueCount].balance = account[t].balance;
                     queueCount++;
 
-//                char writeName[10];
-//                snprintf(writeName, sizeof(writeName), "cust%d.dat", t);
-//                FILE *transWrite;
-//                transWrite = fopen(writeName, "a");
-//                fprintf(transWrite, "%d %c %.2f %.2f \n", threadID, tranType, tranAmount, account[t].balance);
-
                     if (queueCount == 3) {
-                        printf("queueCount 3\n");
                         pthread_cond_signal(&threshold);
                     }
+
                     //sleep
                     sleep(waitTime);
                 }
