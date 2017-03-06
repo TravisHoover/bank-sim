@@ -1,7 +1,3 @@
-The professor is  pettey <br>
-The code is   4330L3 <br>
-Due March 1, 2017
- 
 For this lab you will write a pthreads program to simulate a very small bank.  This bank has three ATM machines located some distance from each other.  Using the ATM’s, you can make deposits to your account or make withdrawals from your account.  Of course your significant other may try to deposit/withdraw at the same time you do because they happen to be out running errands at the same time you are, but on the other side of town.  And your teenage child can also make withdrawals (it would never occur to them to make deposits) because you loaned them your ATM card to go shopping (we won’t discuss the intelligence of this decision!).  If you go below $0, an ATM will print a message saying you are overdrawn and will charge you an extra $10. 
 Your job is to simulate this situation for four customer accounts for one day.  <br> <br>
 At the beginning of the day the bank will start your program running.  <br>
@@ -52,6 +48,4 @@ The ending balance for 00023453 is $784.56
  
 Remember, there should be a cust file for each of the four customers, and a print
 of the ending balance for each of the four customers.
- 
-Sample customer and atm files can be found in the other files in the Lab 3 support files subsection.
  
